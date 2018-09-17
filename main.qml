@@ -69,7 +69,7 @@ ApplicationWindow {
                     delegate: ItemDelegate {
                         text: "Item " + index + " " + processname + " " + message
                         width: parent.width
-                        onClicked: console.log("clicked:", modelData)
+                        //onClicked: console.log("clicked:", modelData)
                         font.pixelSize: 14
                         anchors.left: parent.left
                         anchors.leftMargin: 2

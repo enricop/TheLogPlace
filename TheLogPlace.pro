@@ -15,7 +15,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
     loglistmodel.cpp \
-    logitemlist.cpp
+    logitemlist.cpp \
+    sysloglistener.cpp
+
+LIBS += -L$$PWD/'../../../../Program Files/Poco/VS2017/1.9.0/lib/'
+INCLUDEPATH += $$PWD/'../../../../Program Files/Poco/VS2017/1.9.0/inc'
+DEPENDPATH += $$PWD/'../../../../Program Files/Poco/VS2017/1.9.0/inc'
 
 RESOURCES += qml.qrc
 
@@ -33,4 +38,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     loglistmodel.h \
     logitem.h \
-    logitemlist.h
+    logitemlist.h \
+    sysloglistener.h

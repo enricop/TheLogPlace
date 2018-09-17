@@ -15,12 +15,11 @@ public:
     int size() const;
     const LogItem& at(int i) const;
 
+    void appendItem(const LogItem item);
+
 signals:
     void preItemAppended();
     void postItemAppended();
-
-public slots:
-    void appendItem(const LogItem item);
 
 private:
     QList<LogItem> mItemsList;
