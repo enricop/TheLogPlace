@@ -2,9 +2,11 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
+#include <Poco/Net/RemoteSyslogListener.h>
+#include <Poco/AutoPtr.h>
+
 #include "logitemlist.h"
 #include "loglistmodel.h"
-
 #include "sysloglistener.h"
 
 int main(int argc, char *argv[])
@@ -25,7 +27,19 @@ int main(int argc, char *argv[])
     if (engine.rootObjects().isEmpty())
         return -1;
 
-    testStructuredData();
+    Poco::AutoPtr<Poco::Net::RemoteSyslogListener> listener = new Poco::Net::RemoteSyslogListener();
 
-    return app.exec();
+    listener->open();
+
+    InputChannel *cl = new InputChannel(&logs);
+
+    listener->addChannel(cl);
+
+    int ret = app.exec();
+
+    listener->close();
+
+    delete cl;
+
+    return ret;
 }

@@ -25,5 +25,4 @@ private:
     QList<LogItem> mItemsList;
 };
 
-
 #endif // LOGITEMLIST_H
