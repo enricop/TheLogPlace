@@ -37,7 +37,7 @@ Qt::ItemFlags LogListModel::flags(const QModelIndex &index) const
     if (!index.isValid())
         return Qt::NoItemFlags;
 
-    return Qt::ItemIsEditable;
+    return Qt::ItemIsSelectable;
 }
 
 
