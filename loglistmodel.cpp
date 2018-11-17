@@ -22,6 +22,8 @@ QVariant LogListModel::data(const QModelIndex & index, int role) const {
     const LogItem log = mlogs->at(index.row());
 
     switch (role) {
+    case TimestampRole:
+        return log.m_timestamp;
     case ProcessNameRole:
         return log.m_processname;
     case MessageRole:
@@ -45,6 +47,7 @@ QHash<int, QByteArray> LogListModel::roleNames() const {
     QHash<int, QByteArray> roles;
     roles[ProcessNameRole] = "processname";
     roles[MessageRole] = "message";
+    roles[TimestampRole] = "timestamp";
     return roles;
 }
 
@@ -65,7 +68,7 @@ void LogListModel::setList(LogItemList *list)
     if (mlogs) {
         connect(mlogs, &LogItemList::preItemAppended, this, [=]() {
             const int index = mlogs->size();
-            beginInsertRows(QModelIndex(), index, index);
+            beginInsertRows(QModelIndex(), index, index); // add only one row
         });
         connect(mlogs, &LogItemList::postItemAppended, this, [=]() {
             endInsertRows();

@@ -4,10 +4,13 @@
 
 #include <Poco/Net/RemoteSyslogListener.h>
 #include <Poco/AutoPtr.h>
+#include <Poco/Message.h>
 
 #include "logitemlist.h"
 #include "loglistmodel.h"
-#include "sysloglistener.h"
+#include "logfilterproxymodel.h"
+
+#include "syslogchannel.h"
 
 int main(int argc, char *argv[])
 {
@@ -16,6 +19,7 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
 
     qmlRegisterType<LogListModel>("TheLogPlace", 1, 0, "LogListModel");
+    qmlRegisterType<LogFilterProxyModel>("TheLogPlace", 1, 0, "LogFilterProxyModel");
     qmlRegisterUncreatableType<LogItemList>("TheLogPlace", 1, 0, "LogItemList",
         QStringLiteral("ToDoList should not be created in QML"));
 
@@ -28,17 +32,18 @@ int main(int argc, char *argv[])
         return -1;
 
     Poco::AutoPtr<Poco::Net::RemoteSyslogListener> listener = new Poco::Net::RemoteSyslogListener();
-
     listener->open();
 
-    InputChannel *cl = new InputChannel(&logs);
-
+    SyslogChannel *cl = new SyslogChannel(&logs);
     listener->addChannel(cl);
 
+    Poco::Message msg1("source1", "message1", Poco::Message::PRIO_CRITICAL);
+    cl->log(msg1);
+    Poco::Message msg2("source2", "message2", Poco::Message::PRIO_CRITICAL);
+    cl->log(msg2);
     int ret = app.exec();
 
     listener->close();
-
     delete cl;
 
     return ret;

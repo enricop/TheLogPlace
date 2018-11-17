@@ -1,5 +1,6 @@
-import QtQuick 2.9
-import QtQuick.Controls 2.2
+import QtQuick 2.11
+import QtQuick.Controls 2.4
+import QtQuick.Layouts 1.3
 
 import TheLogPlace 1.0
 
@@ -9,11 +10,14 @@ ApplicationWindow {
     height: 640
     title: qsTr("TheLogPlace")
 
-    header: Rectangle {
+    menuBar: MenuBar {
         Button {
             text: "start"
         }
     }
+
+//    header: Rectangle {
+//    }
 
     SwipeView {
         id: swipeView
@@ -22,19 +26,25 @@ ApplicationWindow {
 
         Page {
             title: "SyslogClient"
-            width: swipeView.width
-            height: swipeView.height
+            //width: swipeView.width
+            //height: swipeView.height
+
             header: Rectangle {
                 TextField {
-                    id: searchBox
+                    id: syslogsearchBox
 
                     placeholderText: "Search..."
                     inputMethodHints: Qt.ImhNoPredictiveText
 
-                    //width: window.width / 5 * 3
                     anchors.right: parent.right
+                    //width: window.width / 5 * 3
                     //anchors.verticalCenter: parent.verticalCenter
                 }
+            }
+
+            LogListModel {
+                id: syslogmodel
+                list: logItemList
             }
 
             ScrollView {
@@ -43,6 +53,16 @@ ApplicationWindow {
                 ListView {
                     focus: true
                     clip: true
+                    //width: parent.width
+
+                    model: LogFilterProxyModel {
+                        id: syslogproxymodel
+                        source: syslogmodel
+
+                        filterString: syslogsearchBox.text
+                        filterCaseSensitivity: Qt.CaseInsensitive
+                    }
+
                     header: Row {
                         id: banner
                         //width: parent.width
@@ -62,22 +82,33 @@ ApplicationWindow {
                             width: 40
                         }
                     }
-                    width: parent.width
-                    model: LogListModel {
-                        list: logItemList
-                    }
+
                     delegate: ItemDelegate {
-                        text: "Item " + index + " " + processname + " " + message
-                        width: parent.width
+                        contentItem: RowLayout {
+                            Label {
+                                text: timestamp
+                            }
+                            Label {
+                                text: processname
+                            }
+                            Label {
+                                text: message
+                            }
+                        }
+
+                        //text: "Item " + index + " " + timestamp + " " + processname + " " + message
                         //onClicked: console.log("clicked:", modelData)
+
+                        width: parent.width
                         font.pixelSize: 14
-                        anchors.left: parent.left
-                        anchors.leftMargin: 2
+
+                        //anchors.left: parent.left
+                        //anchors.leftMargin: 2
                     }
 
                     highlight: Rectangle {
-                            width: parent.width
-                            color: "lightgray"
+                        //width: parent.width
+                        color: "lightgray"
                     }
                 }
             }

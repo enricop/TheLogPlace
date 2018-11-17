@@ -9,9 +9,17 @@ class LogFilterProxyModel : public QSortFilterProxyModel, public QQmlParserStatu
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
 
+    Q_PROPERTY(QObject *source READ source WRITE setSource)
+    Q_PROPERTY(QString filterString READ filterString WRITE setFilterString)
 
 public:
-    LogFilterProxyModel(QObject *parent);
+    explicit LogFilterProxyModel(QObject *parent = nullptr);
+
+    QObject *source() const;
+    void setSource(QObject *source);
+
+    QString filterString() const;
+    void setFilterString(const QString &filter);
 
     void classBegin() override;
     void componentComplete() override;

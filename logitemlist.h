@@ -15,7 +15,7 @@ public:
     int size() const;
     const LogItem& at(int i) const;
 
-    void appendItem(const LogItem item);
+    void appendItem(const LogItem &item);
 
 signals:
     void preItemAppended();

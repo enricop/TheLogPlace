@@ -16,8 +16,8 @@ SOURCES += \
         main.cpp \
     loglistmodel.cpp \
     logitemlist.cpp \
-    sysloglistener.cpp \
-    logfilterproxymodel.cpp
+    logfilterproxymodel.cpp \
+    syslogchannel.cpp
 
 LIBS += -L$$PWD/'../../../../Program Files/Poco/VS2017/1.9.0/lib/'
 INCLUDEPATH += $$PWD/'../../../../Program Files/Poco/VS2017/1.9.0/inc'
@@ -40,5 +40,5 @@ HEADERS += \
     loglistmodel.h \
     logitem.h \
     logitemlist.h \
-    sysloglistener.h \
-    logfilterproxymodel.h
+    logfilterproxymodel.h \
+    syslogchannel.h

@@ -5,6 +5,7 @@
 
 struct LogItem
 {
+    QString m_timestamp;
     QString m_processname;
     QString m_message;
 };

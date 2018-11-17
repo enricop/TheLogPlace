@@ -14,7 +14,8 @@ public:
     explicit LogListModel(QObject *parent = nullptr);
 
     enum LogRoles {
-        ProcessNameRole = Qt::UserRole + 1,
+        TimestampRole = Qt::UserRole + 1,
+        ProcessNameRole,
         MessageRole
     };
 

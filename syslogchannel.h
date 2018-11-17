@@ -5,11 +5,11 @@
 
 class LogItemList;
 
-class InputChannel: public Poco::Channel
+class SyslogChannel: public Poco::Channel
 {
 public:
-    InputChannel(LogItemList *loglist) : m_loglist(loglist) {}
-    ~InputChannel() {}
+    SyslogChannel(LogItemList *loglist) : m_loglist(loglist) {}
+    ~SyslogChannel() {}
 
     void log(const Poco::Message& msg);
 
