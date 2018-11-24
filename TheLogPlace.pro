@@ -19,9 +19,14 @@ SOURCES += \
     logfilterproxymodel.cpp \
     syslogchannel.cpp
 
-LIBS += -L$$PWD/'../../../../Program Files/Poco/VS2017/1.9.0/lib/'
+# Poco
+win32: LIBS += -L$$PWD/'../../../../Program Files/Poco/VS2017/1.9.0/lib/'
 INCLUDEPATH += $$PWD/'../../../../Program Files/Poco/VS2017/1.9.0/inc'
 DEPENDPATH += $$PWD/'../../../../Program Files/Poco/VS2017/1.9.0/inc'
+
+win32: LIBS += -L$$PWD/../libssh2/dll/lib/ -llibssh2
+INCLUDEPATH += $$PWD/../libssh2/dll/include
+DEPENDPATH += $$PWD/../libssh2/dll/include
 
 RESOURCES += qml.qrc
 

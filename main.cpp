@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<LogListModel>("TheLogPlace", 1, 0, "LogListModel");
     qmlRegisterType<LogFilterProxyModel>("TheLogPlace", 1, 0, "LogFilterProxyModel");
     qmlRegisterUncreatableType<LogItemList>("TheLogPlace", 1, 0, "LogItemList",
-        QStringLiteral("ToDoList should not be created in QML"));
+        QStringLiteral("LogItemList should not be created in QML"));
 
     LogItemList logs;
 

@@ -11,13 +11,20 @@ ApplicationWindow {
     title: qsTr("TheLogPlace")
 
     menuBar: MenuBar {
-        Button {
-            text: "start"
+        Menu {
+            title: "&Connect"
+            Action {
+                text: "boh"
+            }
         }
     }
 
-//    header: Rectangle {
-//    }
+    header: GroupBox {
+        title: "Stato"
+        Label {
+            text: "Disconnesso"
+        }
+    }
 
     SwipeView {
         id: swipeView
@@ -29,14 +36,13 @@ ApplicationWindow {
             //width: swipeView.width
             //height: swipeView.height
 
-            header: Rectangle {
+            header: GroupBox {
                 TextField {
                     id: syslogsearchBox
-
                     placeholderText: "Search..."
-                    inputMethodHints: Qt.ImhNoPredictiveText
-
                     anchors.right: parent.right
+
+                    //inputMethodHints: Qt.ImhNoPredictiveText
                     //width: window.width / 5 * 3
                     //anchors.verticalCenter: parent.verticalCenter
                 }
@@ -51,8 +57,8 @@ ApplicationWindow {
                 anchors.fill: parent
 
                 ListView {
-                    focus: true
-                    clip: true
+                    //focus: true
+                    //clip: true
                     //width: parent.width
 
                     model: LogFilterProxyModel {
@@ -64,22 +70,25 @@ ApplicationWindow {
                     }
 
                     header: Row {
-                        id: banner
+                        id: columnsheader
                         //width: parent.width
-                        height: 50
+                        //height: 50
                         //gradient: clubcolors
                         //border {color: "#9EDDF2"; width: 2}
-                        Text {
+                        Label {
+                            text: "Timestamp"
+                        }
+                        Label {
                             //anchors.centerIn: parent
                             text: "Process"
-                            font.pixelSize: 20
-                            width: 150
+                            //font.pixelSize: 20
+                            //width: 150
                         }
-                        Text {
+                        Label {
                             //anchors.centerIn: parent
                             text: "Message"
-                            font.pixelSize: 20
-                            width: 40
+                            //font.pixelSize: 20
+                            //width: 40
                         }
                     }
 
@@ -87,6 +96,7 @@ ApplicationWindow {
                         contentItem: RowLayout {
                             Label {
                                 text: timestamp
+                                //Layout.preferredWidth: 100
                             }
                             Label {
                                 text: processname
@@ -100,7 +110,7 @@ ApplicationWindow {
                         //onClicked: console.log("clicked:", modelData)
 
                         width: parent.width
-                        font.pixelSize: 14
+                        //font.pixelSize: 14
 
                         //anchors.left: parent.left
                         //anchors.leftMargin: 2
@@ -135,14 +145,6 @@ ApplicationWindow {
                 }
             }
         }
-
-        Page {
-            title: "Vimar"
-            Text {
-                id: name
-                text: "Ciao"
-            }
-        }
     }
 
     footer: TabBar {
@@ -154,9 +156,6 @@ ApplicationWindow {
         }
         TabButton {
             text: "OldMessages"
-        }
-        TabButton {
-            text: "VimarLog"
         }
     }
 }
