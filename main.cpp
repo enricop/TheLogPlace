@@ -6,6 +6,9 @@
 #include <Poco/AutoPtr.h>
 #include <Poco/Message.h>
 
+#include <Poco/Exception.h>
+#include <iostream>
+
 #include "logitemlist.h"
 #include "loglistmodel.h"
 #include "logfilterproxymodel.h"
@@ -31,8 +34,14 @@ int main(int argc, char *argv[])
     if (engine.rootObjects().isEmpty())
         return -1;
 
-    Poco::AutoPtr<Poco::Net::RemoteSyslogListener> listener = new Poco::Net::RemoteSyslogListener();
-    listener->open();
+    Poco::AutoPtr<Poco::Net::RemoteSyslogListener> listener = new Poco::Net::RemoteSyslogListener(2000);
+    try {
+        listener->open();
+    }
+    catch (Poco::Exception& exc)
+    {
+        std::cerr << exc.displayText() << std::endl;
+    }
 
     SyslogChannel *cl = new SyslogChannel(&logs);
     listener->addChannel(cl);

@@ -24,6 +24,7 @@ win32: LIBS += -L$$PWD/'../../../../Program Files/Poco/VS2017/1.9.0/lib/'
 INCLUDEPATH += $$PWD/'../../../../Program Files/Poco/VS2017/1.9.0/inc'
 DEPENDPATH += $$PWD/'../../../../Program Files/Poco/VS2017/1.9.0/inc'
 
+#Libssh2
 win32: LIBS += -L$$PWD/../libssh2/dll/lib/ -llibssh2
 INCLUDEPATH += $$PWD/../libssh2/dll/include
 DEPENDPATH += $$PWD/../libssh2/dll/include

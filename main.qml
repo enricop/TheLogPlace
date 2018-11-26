@@ -15,6 +15,7 @@ ApplicationWindow {
             title: "&Connect"
             Action {
                 text: "boh"
+                onTriggered: dialogdownload.open()
             }
         }
     }
@@ -24,6 +25,22 @@ ApplicationWindow {
         Label {
             text: "Disconnesso"
         }
+    }
+
+    Dialog {
+        id: dialogdownload
+        title: "TitleOfDialog"
+
+        x: 100
+        y: 100
+        width: 300
+        height: 200
+
+        modal: true
+        standardButtons: Dialog.Ok | Dialog.Cancel
+
+        onAccepted: console.log("Ok clicked")
+        onRejected: console.log("Cancel clicked")
     }
 
     SwipeView {
