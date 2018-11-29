@@ -42,12 +42,12 @@ Qt::ItemFlags LogListModel::flags(const QModelIndex &index) const
     return Qt::ItemIsSelectable;
 }
 
-
 QHash<int, QByteArray> LogListModel::roleNames() const {
-    QHash<int, QByteArray> roles;
-    roles[ProcessNameRole] = "processname";
-    roles[MessageRole] = "message";
-    roles[TimestampRole] = "timestamp";
+    static const QHash<int, QByteArray> roles {
+        {ProcessNameRole, "processname"},
+        {MessageRole, "message"},
+        {TimestampRole, "timestamp"}
+    };
     return roles;
 }
 

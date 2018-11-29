@@ -12,35 +12,72 @@ ApplicationWindow {
 
     menuBar: MenuBar {
         Menu {
-            title: "&Connect"
+            title: "&Start"
             Action {
-                text: "boh"
+                text: "Download Old Syslog Messages"
                 onTriggered: dialogdownload.open()
+            }
+            Action {
+                text: "Receive New Syslog Messages"
             }
         }
     }
 
     header: GroupBox {
         title: "Stato"
+        //topPadding: 25
+        //padding: 25
         Label {
-            text: "Disconnesso"
+            id: status
+            text: "Nessun log caricato. Clikkare su \'Start\' per iniziare"
         }
     }
 
     Dialog {
         id: dialogdownload
-        title: "TitleOfDialog"
+        title: "Titolo del Dialog"
 
         x: 100
         y: 100
-        width: 300
-        height: 200
+        //width: 300
+        //height: 200
 
         modal: true
-        standardButtons: Dialog.Ok | Dialog.Cancel
 
-        onAccepted: console.log("Ok clicked")
-        onRejected: console.log("Cancel clicked")
+        ColumnLayout {
+            GroupBox {
+                title: "State"
+                Label {
+                    id: dialogstatus
+                    text: "Disconnesso - Inserire un indirizzo IP e clikkare su OK"
+                }
+            }
+            TextField {
+                id: ipaddressbox
+                placeholderText: "IP Address"
+                validator: RegExpValidator { regExp: /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$/ }
+
+                //anchors.right: parent.right
+                //inputMethodHints: Qt.ImhNoPredictiveText
+                //width: window.width / 5 * 3
+                //anchors.verticalCenter: parent.verticalCenter
+            }
+            Button {
+                id: downloadbutton
+                text: "Download Logs"
+                enabled: ipaddressbox.acceptableInput
+            }
+            ProgressBar {
+                from: 0
+                value: 30
+                to: 100
+            }
+        }
+
+        standardButtons: Dialog.Close
+
+        //onAccepted: console.log("Ok clicked")
+        onRejected: console.log("Close clicked")
     }
 
     SwipeView {
@@ -54,6 +91,7 @@ ApplicationWindow {
             //height: swipeView.height
 
             header: GroupBox {
+                title: "Filtri"
                 TextField {
                     id: syslogsearchBox
                     placeholderText: "Search..."
@@ -67,7 +105,7 @@ ApplicationWindow {
 
             LogListModel {
                 id: syslogmodel
-                list: logItemList
+                list: oldlogs
             }
 
             ScrollView {
@@ -133,10 +171,11 @@ ApplicationWindow {
                         //anchors.leftMargin: 2
                     }
 
-                    highlight: Rectangle {
-                        //width: parent.width
-                        color: "lightgray"
-                    }
+                    /*
+                        highlight: Rectangle {
+                            //width: parent.width
+                            color: "lightgray"
+                    } */
                 }
             }
         }
@@ -169,10 +208,10 @@ ApplicationWindow {
         currentIndex: swipeView.currentIndex
 
         TabButton {
-            text: "SyslogRealtime"
+            text: "OldMessages"
         }
         TabButton {
-            text: "OldMessages"
+            text: "SyslogRealtime"
         }
     }
 }
