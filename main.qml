@@ -49,28 +49,35 @@ ApplicationWindow {
                 title: "State"
                 Label {
                     id: dialogstatus
-                    text: "Disconnesso - Inserire un indirizzo IP e clikkare su OK"
+                    text: oldlogsbackend.connectionInfo
                 }
             }
             TextField {
                 id: ipaddressbox
                 placeholderText: "IP Address"
                 validator: RegExpValidator { regExp: /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$/ }
-
-                //anchors.right: parent.right
-                //inputMethodHints: Qt.ImhNoPredictiveText
-                //width: window.width / 5 * 3
-                //anchors.verticalCenter: parent.verticalCenter
+            }
+            TextField {
+                id: usernamebox
+                placeholderText: "Username"
+                validator: RegExpValidator { regExp: /^[a-zA-Z0-9_\-][a-zA-Z0-9_\-]*$/ }
+            }
+            TextField {
+                id: passwordbox
+                placeholderText: "Password"
             }
             Button {
                 id: downloadbutton
                 text: "Download Logs"
-                enabled: ipaddressbox.acceptableInput
+                enabled: ipaddressbox.acceptableInput && usernamebox.acceptableInput
+                onClicked: oldlogsbackend.sshConnector(ipaddressbox.text,
+                                                     usernamebox.text,
+                                                     passwordbox.text)
             }
             ProgressBar {
                 from: 0
-                value: 30
-                to: 100
+                value: oldlogsbackend.downloadProgress
+                to: oldlogsbackend.downloadSize
             }
         }
 
@@ -87,8 +94,6 @@ ApplicationWindow {
 
         Page {
             title: "SyslogClient"
-            //width: swipeView.width
-            //height: swipeView.height
 
             header: GroupBox {
                 title: "Filtri"
@@ -96,10 +101,7 @@ ApplicationWindow {
                     id: syslogsearchBox
                     placeholderText: "Search..."
                     anchors.right: parent.right
-
-                    //inputMethodHints: Qt.ImhNoPredictiveText
                     //width: window.width / 5 * 3
-                    //anchors.verticalCenter: parent.verticalCenter
                 }
             }
 
@@ -113,7 +115,7 @@ ApplicationWindow {
 
                 ListView {
                     //focus: true
-                    //clip: true
+                    clip: true
                     //width: parent.width
 
                     model: LogFilterProxyModel {
@@ -124,7 +126,7 @@ ApplicationWindow {
                         filterCaseSensitivity: Qt.CaseInsensitive
                     }
 
-                    header: Row {
+                    header: RowLayout {
                         id: columnsheader
                         //width: parent.width
                         //height: 50
@@ -134,10 +136,7 @@ ApplicationWindow {
                             text: "Timestamp"
                         }
                         Label {
-                            //anchors.centerIn: parent
                             text: "Process"
-                            //font.pixelSize: 20
-                            //width: 150
                         }
                         Label {
                             //anchors.centerIn: parent
@@ -148,7 +147,7 @@ ApplicationWindow {
                     }
 
                     delegate: ItemDelegate {
-                        contentItem: RowLayout {
+                        RowLayout {
                             Label {
                                 text: timestamp
                                 //Layout.preferredWidth: 100

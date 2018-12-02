@@ -20,3 +20,12 @@ void LogItemList::appendItem(const LogItem &item)
 
     emit postItemAppended();
 }
+
+void LogItemList::reset()
+{
+    emit preClear();
+
+    mItemsList.clear();
+
+    emit postClear();
+}

@@ -2,16 +2,10 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
-#include <Poco/Net/RemoteSyslogListener.h>
-#include <Poco/AutoPtr.h>
-#include <Poco/Message.h>
-
-#include <Poco/Exception.h>
-#include <iostream>
-
 #include "logitemlist.h"
 #include "loglistmodel.h"
 #include "logfilterproxymodel.h"
+#include "backend.h"
 
 #include "syslogchannel.h"
 
@@ -29,14 +23,21 @@ int main(int argc, char *argv[])
     LogItemList oldlogs;
     LogItemList newlogs;
 
+    Backend oldlogsbackend(&oldlogs);
+    Backend newlogsbackend(&newlogs);
+
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("oldlogs"), &oldlogs);
     engine.rootContext()->setContextProperty(QStringLiteral("newlogs"), &newlogs);
+
+    engine.rootContext()->setContextProperty(QStringLiteral("oldlogsbackend"), &oldlogsbackend);
+    engine.rootContext()->setContextProperty(QStringLiteral("newlogsbackend"), &newlogsbackend);
+
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
     if (engine.rootObjects().isEmpty())
         return -1;
 
-    Poco::AutoPtr<Poco::Net::RemoteSyslogListener> listener = new Poco::Net::RemoteSyslogListener(2000);
+    /*
     try {
         listener->open();
     }
@@ -44,10 +45,9 @@ int main(int argc, char *argv[])
     {
         std::cerr << exc.displayText() << std::endl;
     }
+    */
 
-    SyslogChannel *cl = new SyslogChannel(&oldlogs);
-    listener->addChannel(cl);
-
+    /*
     Poco::Message msg1("source1", "message1", Poco::Message::PRIO_CRITICAL);
     cl->log(msg1);
     Poco::Message msg2("source2", "message2", Poco::Message::PRIO_CRITICAL);
@@ -57,11 +57,7 @@ int main(int argc, char *argv[])
                     " \"{\"error\":0,\"function\":\"keepalive\",\"msgid\":\"55271ef6-4e23-4c12-87f4-8308c85091f5\","
                     "result\":[],\"source\":\"ea9ad8642c26b1d4\",\"target\":\"CloudClient\",\"type\":\"response\"}#012\".");
     listener->processMessage(tmp);
+    */
 
-    int ret = app.exec();
-
-    listener->close();
-    delete cl;
-
-    return ret;
+    return app.exec();
 }

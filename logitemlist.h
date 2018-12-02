@@ -16,10 +16,14 @@ public:
     const LogItem& at(int i) const;
 
     void appendItem(const LogItem &item);
+    void reset();
 
 signals:
     void preItemAppended();
     void postItemAppended();
+
+    void preClear();
+    void postClear();
 
 private:
     QList<LogItem> mItemsList;

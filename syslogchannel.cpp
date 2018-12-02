@@ -7,7 +7,7 @@
 void SyslogChannel::log(const Poco::Message& msg)
 {
     const LogItem item {
-        QString::fromStdString(Poco::DateTimeFormatter::format(msg.getTime(), "%d %H:%M:%S")),
+        QString::fromStdString(Poco::DateTimeFormatter::format(msg.getTime(), "%m/%d %H:%M:%S")),
         QString::fromStdString(msg.get("app", "NoProc")),
         QString::fromStdString(msg.getText())
     };
