@@ -1,13 +1,13 @@
-#ifndef LOG_H
-#define LOG_H
+#ifndef LOGITEM_H
+#define LOGITEM_H
 
 #include <QString>
 
 struct LogItem
 {
-    QString m_timestamp;
-    QString m_processname;
-    QString m_message;
+    const QString m_timestamp;
+    const QString m_processname;
+    const QString m_message;
 };
 
-#endif // LOG_H
+#endif // LOGITEM_H

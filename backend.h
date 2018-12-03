@@ -2,6 +2,7 @@
 #define BACKEND_H
 
 #include <QObject>
+#include <QtConcurrent/QtConcurrent>
 
 #include <Poco/Net/RemoteSyslogListener.h>
 #include <Poco/AutoPtr.h>
@@ -22,6 +23,7 @@ class Backend : public QObject
     Q_PROPERTY(QString bannerInfo READ getBannerInfo WRITE setBannerInfo NOTIFY bannerinfoChanged)
     Q_PROPERTY(qint64 downloadProgress READ getDlProg WRITE setDlProg NOTIFY dlProgChanged)
     Q_PROPERTY(qint64 downloadSize READ getDlSize WRITE setDlSize NOTIFY dlSizeChanged)
+    Q_PROPERTY(bool downloadCompleted READ getDlCompleted NOTIFY dlCompletedChanged)
 
 public:
     explicit Backend(LogItemList *list, QObject *parent = nullptr);
@@ -35,6 +37,8 @@ public:
     qint64 getDlSize() const;
     void setDlSize(qint64 info);
 
+    bool getDlCompleted();
+
     Q_INVOKABLE void sshConnector(const QString ipaddress, const QString username, const QString password);
 
 signals:
@@ -42,11 +46,12 @@ signals:
      void bannerinfoChanged();
      void dlProgChanged();
      void dlSizeChanged();
+     void dlCompletedChanged();
 
 public slots:
 
 private:
-    void sshDownloader();
+    void sshDownloader(const QString filename);
     void sshShutdown();
     void processMessages(char *buffer, const int len);
     void validateAndHandleInputMessage();
@@ -55,6 +60,8 @@ private:
     QString m_bannerInfo;
     qint64 m_downloadProgress;
     qint64 m_downloadSize;
+
+    QFutureWatcher<void> m_logsdownloadWatcher;
 
     int m_sockfd;
     LIBSSH2_SESSION *m_sshsession;

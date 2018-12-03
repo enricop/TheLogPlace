@@ -30,6 +30,16 @@ Backend::Backend(LogItemList *list, QObject *parent) :
     m_channel.reset(new SyslogChannel(list));
 
     m_listener->addChannel(m_channel.get());
+
+    connect(&m_logsdownloadWatcher, &QFutureWatcher<void>::started, this, [=]() {
+        emit dlCompletedChanged();
+    });
+    connect(&m_logsdownloadWatcher, &QFutureWatcher<void>::canceled, this, [=]() {
+        emit dlCompletedChanged();
+    });
+    connect(&m_logsdownloadWatcher, &QFutureWatcher<void>::finished, this, [=]() {
+        emit dlCompletedChanged();
+    });
 }
 
 QString Backend::getConInfo() const {
@@ -70,6 +80,11 @@ void Backend::setDlSize(qint64 size) {
         return;
     m_downloadSize = size;
     emit dlSizeChanged();
+}
+
+bool Backend::getDlCompleted()
+{
+    return !m_logsdownloadWatcher.isRunning();
 }
 
 void Backend::sshConnector(const QString ipaddress,
@@ -113,8 +128,11 @@ void Backend::sshConnector(const QString ipaddress,
     sin.sin_port = htons(22);
     sin.sin_addr.s_addr = host_addr.S_un.S_addr;
 
-    if (::connect(m_sockfd, (struct sockaddr*)(&sin), sizeof(struct sockaddr_in)) != 0) {
-        setConInfo(tr("Failed enstablishing connection to %1").arg(ipaddress));
+    rc = ::connect(m_sockfd, (struct sockaddr*)(&sin), sizeof(struct sockaddr_in));
+    if (rc != 0) {
+        setConInfo(tr("Failed enstablishing connection to %1: error %2")
+                   .arg(ipaddress)
+                   .arg(std::strerror(errno)));
         m_sockfd = -1;
         return;
     }
@@ -158,8 +176,10 @@ void Backend::sshConnector(const QString ipaddress,
 
     setConInfo(tr("Authenticated with username \"%1\" and provided password!").arg(username));
 
-    sshDownloader();
-    sshShutdown();
+    //QFuture<void> future = QtConcurrent::run(this, &Backend::sshDownloader, QString("messages"));
+    //m_logsdownloadWatcher.setFuture(future);
+    sshDownloader(QString("messages"));
+
     return;
 }
 
@@ -183,7 +203,6 @@ void Backend::sshShutdown() {
 static int waitsocket(int socket_fd, LIBSSH2_SESSION *session)
 {
     struct timeval timeout;
-    int rc;
     fd_set fd;
     fd_set *writefd = nullptr;
     fd_set *readfd = nullptr;
@@ -205,19 +224,14 @@ static int waitsocket(int socket_fd, LIBSSH2_SESSION *session)
     if(dir & LIBSSH2_SESSION_BLOCK_OUTBOUND)
         writefd = &fd;
 
-    rc = select(socket_fd + 1, readfd, writefd, nullptr, &timeout);
-
-    return rc;
+    return select(socket_fd + 1, readfd, writefd, nullptr, &timeout);;
 }
 
-void Backend::sshDownloader() {
-    libssh2_struct_stat fileinfo;
-
-    QString filename("messages");
-
+void Backend::sshDownloader(const QString filename) {
     setConInfo(tr("Downloading file %1!").arg(filename));
 
     /* Request a file via SCP */
+    libssh2_struct_stat fileinfo;
     do {
         m_sshchannel = libssh2_scp_recv2(m_sshsession,
                                         filename.toStdString().c_str(),
@@ -250,7 +264,7 @@ void Backend::sshDownloader() {
         int rc = 0;
 
         do {
-            size_t amount = sizeof(mem)-1;
+            size_t amount = sizeof(mem) - 2;
 
             if ((fileinfo.st_size - got) < amount)
                 amount = fileinfo.st_size - got;
@@ -276,8 +290,10 @@ void Backend::sshDownloader() {
     if (got < fileinfo.st_size) {
         setConInfo(tr("Error downloading whole file %1").arg(filename));
     } else {
-        setConInfo(tr("Downloaded file %1!").arg(filename));
+        setConInfo(tr("Download of file %1 completed!").arg(filename));
     }
+
+    sshShutdown();
 }
 
 void Backend::processMessages(char *buffer, const int len) {
@@ -307,15 +323,33 @@ void Backend::processMessages(char *buffer, const int len) {
 void Backend::validateAndHandleInputMessage() {
     std::string::size_type i = 0;
 
-    for (int j = 1; j < 4 && i != std::string::npos; j++)
+    int j;
+    for (j = 1; j < 4 && i != std::string::npos; j++) //Find third space - beginning of text
         i = m_logbuffer.find(' ', i+1);
 
-    if (i == 0 || i == std::string::npos || m_logbuffer.at(i-1) != ':') {
+    if (j != 4 ||
+        i == 0 ||
+        i == std::string::npos ||
+        m_logbuffer.at(i-1) != ':')  //Preceeding char should be ':'
+    {
         std::cout << "Invalid or truncated log: " << m_logbuffer << std::endl;
-    } else {
-        m_logbuffer.insert(i-1, " X ");
-        m_logbuffer.insert(0, "<15>15 ");
-        m_listener->processMessage(m_logbuffer);
+    }
+    else
+    {
+        try {
+            if (m_logbuffer.at(i+1) == '[') // Disable parsing of 'structured data'
+                m_logbuffer.insert(i+1, "-");
+        } catch (...) {
+            std::cout << "Log with empty message text: " << m_logbuffer << std::endl;
+        }
+
+        m_logbuffer.insert(i-1, " X "); // PROCID SP MSGID
+        m_logbuffer.insert(0, "<15>15 "); // <int>: priority, severity, facility
+        try {
+            m_listener->processMessage(m_logbuffer);
+        } catch (...) {
+            std::cout << "Failed parsing: " << m_logbuffer << std::endl;
+        }
     }
 
     m_logbuffer.clear();

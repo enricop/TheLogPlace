@@ -35,7 +35,7 @@ ApplicationWindow {
 
     Dialog {
         id: dialogdownload
-        title: "Titolo del Dialog"
+        title: "SSH Logs Download"
 
         x: 100
         y: 100
@@ -54,22 +54,23 @@ ApplicationWindow {
             }
             TextField {
                 id: ipaddressbox
-                placeholderText: "IP Address"
+                placeholderText: "IP Address, es: 172.20.30.48"
                 validator: RegExpValidator { regExp: /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$/ }
             }
             TextField {
                 id: usernamebox
-                placeholderText: "Username"
+                placeholderText: "SSH Username, es: root"
                 validator: RegExpValidator { regExp: /^[a-zA-Z0-9_\-][a-zA-Z0-9_\-]*$/ }
             }
             TextField {
                 id: passwordbox
-                placeholderText: "Password"
+                placeholderText: "SSH Password, can be empty"
+                echoMode: TextInput.Password
             }
             Button {
                 id: downloadbutton
                 text: "Download Logs"
-                enabled: ipaddressbox.acceptableInput && usernamebox.acceptableInput
+                enabled: ipaddressbox.acceptableInput && usernamebox.acceptableInput && oldlogsbackend.downloadCompleted
                 onClicked: oldlogsbackend.sshConnector(ipaddressbox.text,
                                                      usernamebox.text,
                                                      passwordbox.text)
@@ -126,6 +127,7 @@ ApplicationWindow {
                         filterCaseSensitivity: Qt.CaseInsensitive
                     }
 
+                    headerPositioning: ListView.OverlayHeader
                     header: RowLayout {
                         id: columnsheader
                         //width: parent.width
@@ -133,16 +135,19 @@ ApplicationWindow {
                         //gradient: clubcolors
                         //border {color: "#9EDDF2"; width: 2}
                         Label {
-                            text: "Timestamp"
+                            text: "Timestamp        "
+                            font.pixelSize: 12
+                            font.bold: true
                         }
                         Label {
-                            text: "Process"
+                            text: "Process                  "
+                            font.pixelSize: 12
+                            font.bold: true
                         }
                         Label {
-                            //anchors.centerIn: parent
                             text: "Message"
-                            //font.pixelSize: 20
-                            //width: 40
+                            font.pixelSize: 12
+                            font.bold: true
                         }
                     }
 
@@ -154,27 +159,29 @@ ApplicationWindow {
                             }
                             Label {
                                 text: processname
+                                font.bold: true
                             }
                             Label {
                                 text: message
                             }
                         }
 
-                        //text: "Item " + index + " " + timestamp + " " + processname + " " + message
                         //onClicked: console.log("clicked:", modelData)
 
-                        width: parent.width
-                        //font.pixelSize: 14
+                        font.pixelSize: 12
+                        font.family: "DejaVu Sans Mono"
 
+                        height: 17
+                        //width: parent.width
                         //anchors.left: parent.left
                         //anchors.leftMargin: 2
                     }
 
-                    /*
-                        highlight: Rectangle {
+
+                    //highlight: Rectangle {
                             //width: parent.width
-                            color: "lightgray"
-                    } */
+                            //color: "lightgray"
+                    //}
                 }
             }
         }

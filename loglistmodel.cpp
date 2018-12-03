@@ -2,6 +2,8 @@
 
 #include "logitemlist.h"
 
+#include <iostream>
+
 LogListModel::LogListModel(QObject *parent)
     : QAbstractListModel(parent)
     , mlogs(nullptr)
@@ -68,6 +70,7 @@ void LogListModel::setList(LogItemList *list)
     if (mlogs) {
         connect(mlogs, &LogItemList::preItemAppended, this, [=]() {
             const int index = mlogs->size();
+            std::cout << index << std::endl;
             beginInsertRows(QModelIndex(), index, index); // add only one row
         });
         connect(mlogs, &LogItemList::postItemAppended, this, [=]() {
