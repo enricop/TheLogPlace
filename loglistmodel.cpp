@@ -69,11 +69,19 @@ void LogListModel::setList(LogItemList *list)
 
     if (mlogs) {
         connect(mlogs, &LogItemList::preItemAppended, this, [=]() {
-            const int index = mlogs->size();
-            std::cout << index << std::endl;
-            beginInsertRows(QModelIndex(), index, index); // add only one row
+            beginInsertRows(QModelIndex(), mlogs->size(), mlogs->size());
         });
         connect(mlogs, &LogItemList::postItemAppended, this, [=]() {
+            endInsertRows();
+        });
+        connect(mlogs, &LogItemList::preClear, this, [=]() {
+            beginResetModel();
+        });
+        connect(mlogs, &LogItemList::postClear, this, [=]() {
+            endResetModel();
+        });
+        connect(mlogs, &LogItemList::addAllItems, this, [=]() {
+            beginInsertRows(QModelIndex(), 0, mlogs->size() - 1);
             endInsertRows();
         });
     }

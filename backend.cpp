@@ -23,7 +23,8 @@ Backend::Backend(LogItemList *list, QObject *parent) :
     m_sockfd(-1),
     m_sshsession(nullptr),
     m_sshchannel(nullptr),
-    m_logbuffer()
+    m_logbuffer(),
+    m_logs(list)
 {
     m_listener = new Poco::Net::RemoteSyslogListener(2000);
 
@@ -40,6 +41,11 @@ Backend::Backend(LogItemList *list, QObject *parent) :
     connect(&m_logsdownloadWatcher, &QFutureWatcher<void>::finished, this, [=]() {
         emit dlCompletedChanged();
     });
+}
+
+Backend::~Backend()
+{
+    m_logsdownloadWatcher.cancel();
 }
 
 QString Backend::getConInfo() const {
@@ -176,9 +182,10 @@ void Backend::sshConnector(const QString ipaddress,
 
     setConInfo(tr("Authenticated with username \"%1\" and provided password!").arg(username));
 
-    //QFuture<void> future = QtConcurrent::run(this, &Backend::sshDownloader, QString("messages"));
-    //m_logsdownloadWatcher.setFuture(future);
-    sshDownloader(QString("messages"));
+    m_logs->reset();
+
+    QFuture<void> future = QtConcurrent::run(this, &Backend::sshDownloader, QString("/var/log/messages.0"));
+    m_logsdownloadWatcher.setFuture(future);
 
     return;
 }
@@ -286,6 +293,8 @@ void Backend::sshDownloader(const QString filename) {
         so we loop on this condition */
         waitsocket(m_sockfd, m_sshsession); /* now we wait */
     }
+
+    m_logs->outputdata();
 
     if (got < fileinfo.st_size) {
         setConInfo(tr("Error downloading whole file %1").arg(filename));

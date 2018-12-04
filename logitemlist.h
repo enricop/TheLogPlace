@@ -16,11 +16,14 @@ public:
     const LogItem& at(int i) const;
 
     void appendItem(const LogItem &item);
+    void appendItem2(const LogItem &item);
     void reset();
+    void outputdata();
 
 signals:
     void preItemAppended();
     void postItemAppended();
+    void addAllItems();
 
     void preClear();
     void postClear();

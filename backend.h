@@ -27,6 +27,7 @@ class Backend : public QObject
 
 public:
     explicit Backend(LogItemList *list, QObject *parent = nullptr);
+    ~Backend();
 
     QString getConInfo() const;
     void setConInfo(QString info);
@@ -70,6 +71,7 @@ private:
 
     Poco::AutoPtr<Poco::Net::RemoteSyslogListener> m_listener;
     std::unique_ptr<SyslogChannel> m_channel;
+    LogItemList * m_logs;
 };
 
 #endif // BACKEND_H

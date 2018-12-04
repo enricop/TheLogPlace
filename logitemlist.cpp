@@ -1,4 +1,5 @@
 #include "logitemlist.h"
+#include "logitemlist.h"
 
 LogItemList::LogItemList(QObject *parent) : QObject(parent), mItemsList()
 {
@@ -14,6 +15,11 @@ const LogItem& LogItemList::at(int i) const {
 
 void LogItemList::appendItem(const LogItem &item)
 {
+    mItemsList.append(item);
+}
+
+void LogItemList::appendItem2(const LogItem &item)
+{
     emit preItemAppended();
 
     mItemsList.append(item);
@@ -28,4 +34,9 @@ void LogItemList::reset()
     mItemsList.clear();
 
     emit postClear();
+}
+
+void LogItemList::outputdata()
+{
+    emit addAllItems();
 }

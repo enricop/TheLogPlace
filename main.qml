@@ -82,7 +82,7 @@ ApplicationWindow {
             }
         }
 
-        standardButtons: Dialog.Close
+        //standardButtons: Dialog.Close
 
         //onAccepted: console.log("Ok clicked")
         onRejected: console.log("Close clicked")
@@ -113,11 +113,11 @@ ApplicationWindow {
 
             ScrollView {
                 anchors.fill: parent
+                ScrollBar.horizontal.policy: ScrollBar.AlwaysOn
 
                 ListView {
                     //focus: true
                     clip: true
-                    //width: parent.width
 
                     model: LogFilterProxyModel {
                         id: syslogproxymodel
