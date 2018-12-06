@@ -4,7 +4,7 @@
 #include "syslogchannel.h"
 #include "logitemlist.h"
 
-void SyslogChannel::log(const Poco::Message& msg)
+void SyslogChannelNew::log(const Poco::Message& msg)
 {
     const LogItem item {
         QString::fromStdString(Poco::DateTimeFormatter::format(msg.getTime(), "%m/%d %H:%M:%S")),
@@ -12,5 +12,18 @@ void SyslogChannel::log(const Poco::Message& msg)
         QString::fromStdString(msg.getText())
     };
 
-    m_loglist->appendItem(item);
+    m_loglist->lockList();
+
+    m_loglist->appendItemNew(item);
+}
+
+void SyslogChannelOld::log(const Poco::Message& msg)
+{
+    const LogItem item {
+        QString::fromStdString(Poco::DateTimeFormatter::format(msg.getTime(), "%m/%d %H:%M:%S")),
+        QString::fromStdString(msg.get("app", "NoProc")),
+        QString::fromStdString(msg.getText())
+    };
+
+    m_loglist->appendItemOld(item);
 }

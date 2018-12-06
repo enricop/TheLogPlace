@@ -13,12 +13,12 @@ const LogItem& LogItemList::at(int i) const {
     return mItemsList.at(i);
 }
 
-void LogItemList::appendItem(const LogItem &item)
+void LogItemList::appendItemOld(const LogItem &item)
 {
     mItemsList.append(item);
 }
 
-void LogItemList::appendItem2(const LogItem &item)
+void LogItemList::appendItemNew(const LogItem &item)
 {
     emit preItemAppended();
 
@@ -39,4 +39,14 @@ void LogItemList::reset()
 void LogItemList::outputdata()
 {
     emit addAllItems();
+}
+
+void LogItemList::lockList()
+{
+    mNewItemMtx.lock();
+}
+
+void LogItemList::unlockList()
+{
+    mNewItemMtx.unlock();
 }

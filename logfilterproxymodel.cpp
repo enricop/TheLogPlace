@@ -16,7 +16,6 @@ void LogFilterProxyModel::setSource(QObject *source)
     setSourceModel(qobject_cast<QAbstractItemModel *>(source));
 }
 
-
 QString LogFilterProxyModel::filterString() const
 {
     return m_logTextFilterString;

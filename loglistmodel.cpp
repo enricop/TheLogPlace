@@ -69,10 +69,13 @@ void LogListModel::setList(LogItemList *list)
 
     if (mlogs) {
         connect(mlogs, &LogItemList::preItemAppended, this, [=]() {
-            beginInsertRows(QModelIndex(), mlogs->size(), mlogs->size());
+            const int newindex = mlogs->size() - 1;
+            std::cout << newindex << std::endl;
+            beginInsertRows(QModelIndex(), newindex, newindex);
         });
         connect(mlogs, &LogItemList::postItemAppended, this, [=]() {
             endInsertRows();
+            mlogs->unlockList();
         });
         connect(mlogs, &LogItemList::preClear, this, [=]() {
             beginResetModel();

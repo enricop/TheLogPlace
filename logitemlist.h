@@ -2,6 +2,7 @@
 #define LOGITEMLIST_H
 
 #include <QObject>
+#include <QMutex>
 
 #include "logitem.h"
 
@@ -15,10 +16,14 @@ public:
     int size() const;
     const LogItem& at(int i) const;
 
-    void appendItem(const LogItem &item);
-    void appendItem2(const LogItem &item);
+    void appendItemNew(const LogItem &item);
+    void appendItemOld(const LogItem &item);
+
     void reset();
     void outputdata();
+
+    void lockList();
+    void unlockList();
 
 signals:
     void preItemAppended();
@@ -30,6 +35,8 @@ signals:
 
 private:
     QList<LogItem> mItemsList;
+
+    QMutex mNewItemMtx;
 };
 
 #endif // LOGITEMLIST_H

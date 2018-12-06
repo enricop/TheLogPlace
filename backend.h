@@ -26,7 +26,7 @@ class Backend : public QObject
     Q_PROPERTY(bool downloadCompleted READ getDlCompleted NOTIFY dlCompletedChanged)
 
 public:
-    explicit Backend(LogItemList *list, QObject *parent = nullptr);
+    explicit Backend(LogItemList *list, bool mode, QObject *parent = nullptr);
     ~Backend();
 
     QString getConInfo() const;
@@ -52,10 +52,20 @@ signals:
 public slots:
 
 private:
+    void openListener();
+
     void sshDownloader(const QString filename);
+    void sshExecutor(const QString command);
     void sshShutdown();
-    void processMessages(char *buffer, const int len);
-    void validateAndHandleInputMessage();
+
+    void processOldMessages(char *buffer, const int len, std::string &oldlogbuffer);
+    void validateAndHandleOldMessage(std::string& oldlogbuffer);
+
+    QString getIPAddress();
+
+    void startJob();
+
+    bool m_mode; //Download old messages (false) OR Receive new messages (true)
 
     QString m_connectionInfo;
     QString m_bannerInfo;
@@ -67,7 +77,6 @@ private:
     int m_sockfd;
     LIBSSH2_SESSION *m_sshsession;
     LIBSSH2_CHANNEL *m_sshchannel;
-    std::string m_logbuffer;
 
     Poco::AutoPtr<Poco::Net::RemoteSyslogListener> m_listener;
     std::unique_ptr<SyslogChannel> m_channel;

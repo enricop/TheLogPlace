@@ -23,8 +23,8 @@ int main(int argc, char *argv[])
     LogItemList oldlogs;
     LogItemList newlogs;
 
-    Backend oldlogsbackend(&oldlogs);
-    Backend newlogsbackend(&newlogs);
+    Backend oldlogsbackend(&oldlogs, false);
+    Backend newlogsbackend(&newlogs, true);
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("oldlogs"), &oldlogs);
@@ -36,16 +36,6 @@ int main(int argc, char *argv[])
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
     if (engine.rootObjects().isEmpty())
         return -1;
-
-    /*
-    try {
-        listener->open();
-    }
-    catch (Poco::Exception& exc)
-    {
-        std::cerr << exc.displayText() << std::endl;
-    }
-    */
 
     /*
     Poco::Message msg1("source1", "message1", Poco::Message::PRIO_CRITICAL);

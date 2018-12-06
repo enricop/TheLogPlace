@@ -3,6 +3,7 @@
 #include "logitemlist.h"
 
 #include <libssh2.h>
+#include <QNetworkInterface>
 
 #ifdef WIN32
     #include <winsock2.h>
@@ -15,30 +16,35 @@
     #include <unistd.h>
 #endif
 
-Backend::Backend(LogItemList *list, QObject *parent) :
+static const unsigned int UDPport = 2000;
+
+Backend::Backend(LogItemList *list, bool mode, QObject *parent) :
     QObject(parent),
-    m_connectionInfo("Disconnesso - Inserire un indirizzo IP e clikkare su OK"),
+    m_mode(mode),
+    m_connectionInfo("Disconnesso - Inserire i dati e clikkare per proseguire"),
     m_downloadProgress(0),
     m_downloadSize(0),
     m_sockfd(-1),
     m_sshsession(nullptr),
     m_sshchannel(nullptr),
-    m_logbuffer(),
     m_logs(list)
 {
-    m_listener = new Poco::Net::RemoteSyslogListener(2000);
+    m_listener = new Poco::Net::RemoteSyslogListener(UDPport);
 
-    m_channel.reset(new SyslogChannel(list));
+    if (mode)
+        m_channel.reset(new SyslogChannelNew(list));
+    else
+        m_channel.reset(new SyslogChannelOld(list));
 
     m_listener->addChannel(m_channel.get());
 
-    connect(&m_logsdownloadWatcher, &QFutureWatcher<void>::started, this, [=]() {
+    connect(&m_logsdownloadWatcher, &QFutureWatcher<void>::started, [=]() {
         emit dlCompletedChanged();
     });
-    connect(&m_logsdownloadWatcher, &QFutureWatcher<void>::canceled, this, [=]() {
+    connect(&m_logsdownloadWatcher, &QFutureWatcher<void>::canceled, [=]() {
         emit dlCompletedChanged();
     });
-    connect(&m_logsdownloadWatcher, &QFutureWatcher<void>::finished, this, [=]() {
+    connect(&m_logsdownloadWatcher, &QFutureWatcher<void>::finished, [=]() {
         emit dlCompletedChanged();
     });
 }
@@ -46,6 +52,18 @@ Backend::Backend(LogItemList *list, QObject *parent) :
 Backend::~Backend()
 {
     m_logsdownloadWatcher.cancel();
+    m_listener->close();
+}
+
+void Backend::openListener()
+{
+    try {
+        m_listener->open();
+    }
+    catch (Poco::Exception& exc)
+    {
+        setConInfo(tr("Failed opening syslog UDP listener on port %1: %2").arg(UDPport).arg(QString::fromStdString(exc.displayText())));
+    }
 }
 
 QString Backend::getConInfo() const {
@@ -182,12 +200,23 @@ void Backend::sshConnector(const QString ipaddress,
 
     setConInfo(tr("Authenticated with username \"%1\" and provided password!").arg(username));
 
-    m_logs->reset();
-
-    QFuture<void> future = QtConcurrent::run(this, &Backend::sshDownloader, QString("/var/log/messages.0"));
-    m_logsdownloadWatcher.setFuture(future);
+    startJob();
 
     return;
+}
+
+void Backend::startJob() {
+    m_logs->reset();
+
+    if (m_mode) {
+        sshExecutor("sed -i~ '46i *.* @" + getIPAddress() + ":" + QString::number(UDPport) + "' /etc/rsyslog.conf");
+        sshExecutor("/etc/init.d/syslog restart");
+        sshShutdown();
+        openListener();
+    } else {
+        QFuture<void> future = QtConcurrent::run(this, &Backend::sshDownloader, QString("/var/log/messages"));
+        m_logsdownloadWatcher.setFuture(future);
+    }
 }
 
 void Backend::sshShutdown() {
@@ -205,6 +234,8 @@ void Backend::sshShutdown() {
     close(m_sockfd);
 #endif
     m_sockfd = -1;
+
+    libssh2_exit();
 }
 
 static int waitsocket(int socket_fd, LIBSSH2_SESSION *session)
@@ -259,10 +290,11 @@ void Backend::sshDownloader(const QString filename) {
         }
     } while (!m_sshchannel);
 
-    setConInfo(tr("Requesting SCP of file %1 is done, now receive data!").arg(filename));
+    setConInfo(tr("Requested a copy of file %1, now receive data!").arg(filename));
+
+    std::string oldlogbuffer;
 
     setDlSize(fileinfo.st_size);
-
     libssh2_struct_stat_size got = 0;
     setDlProg(got);
 
@@ -281,7 +313,7 @@ void Backend::sshDownloader(const QString filename) {
             if (rc > 0) {
                 got += rc;
                 setDlProg(got);
-                processMessages(mem, rc);
+                processOldMessages(mem, rc, oldlogbuffer);
             }
         } while (rc >= 0);
 
@@ -297,15 +329,48 @@ void Backend::sshDownloader(const QString filename) {
     m_logs->outputdata();
 
     if (got < fileinfo.st_size) {
-        setConInfo(tr("Error downloading whole file %1").arg(filename));
+        setConInfo(tr("Error during downloading of file %1").arg(filename));
     } else {
-        setConInfo(tr("Download of file %1 completed!").arg(filename));
+        setConInfo(tr("Processing of file %1 completed!").arg(filename));
     }
 
     sshShutdown();
 }
 
-void Backend::processMessages(char *buffer, const int len) {
+void Backend::sshExecutor(const QString command) {
+    /* Exec non-blocking on the remote host */
+    while( (m_sshchannel = libssh2_channel_open_session(m_sshsession)) == nullptr &&
+           libssh2_session_last_error(m_sshsession, nullptr, nullptr, 0) == LIBSSH2_ERROR_EAGAIN )
+    {
+        waitsocket(m_sockfd, m_sshsession);
+    }
+    if( m_sshchannel == nullptr )
+    {
+        setConInfo(tr("libssh2_channel_open_session error"));
+        sshShutdown();
+    }
+    int rc;
+    while( (rc = libssh2_channel_exec(m_sshchannel, command.toStdString().c_str())) == LIBSSH2_ERROR_EAGAIN )
+    {
+        waitsocket(m_sockfd, m_sshsession);
+    }
+    if( rc != 0 )
+        setConInfo(tr("libssh2_channel_exec error: %1").arg(rc));
+
+    int exitcode = 127;
+    while( (rc = libssh2_channel_close(m_sshchannel)) == LIBSSH2_ERROR_EAGAIN )
+        waitsocket(m_sockfd, m_sshsession);
+
+    if( rc == 0 )
+        exitcode = libssh2_channel_get_exit_status(m_sshchannel);
+
+    if (exitcode == 0)
+        setConInfo(tr("Command %1 executed successfully").arg(command));
+    else
+        setConInfo(tr("Error executing command %1: %2").arg(command).arg(rc));
+}
+
+void Backend::processOldMessages(char *buffer, const int len, std::string& oldlogbuffer) {
     if (buffer == nullptr || len <= 0)
         return;
 
@@ -317,10 +382,10 @@ void Backend::processMessages(char *buffer, const int len) {
 
     while ((end = std::strchr(end, '\n')) != nullptr) {
         *end = '\0';
-        m_logbuffer.append(begin);
+        oldlogbuffer.append(begin);
 
         if (buffer + len != end) { //We have an endline - a complete log!
-            validateAndHandleInputMessage();
+            validateAndHandleOldMessage(oldlogbuffer);
         }
 
         begin = ++end;
@@ -329,37 +394,45 @@ void Backend::processMessages(char *buffer, const int len) {
     return;
 }
 
-void Backend::validateAndHandleInputMessage() {
+void Backend::validateAndHandleOldMessage(std::string& oldlogbuffer) {
     std::string::size_type i = 0;
 
     int j;
     for (j = 1; j < 4 && i != std::string::npos; j++) //Find third space - beginning of text
-        i = m_logbuffer.find(' ', i+1);
+        i = oldlogbuffer.find(' ', i+1);
 
-    if (j != 4 ||
-        i == 0 ||
-        i == std::string::npos ||
-        m_logbuffer.at(i-1) != ':')  //Preceeding char should be ':'
+    if (j == 4 &&
+        i != 0 &&
+        i != std::string::npos &&
+        oldlogbuffer.at(i-1) == ':')  //Preceeding char should be ':'
     {
-        std::cout << "Invalid or truncated log: " << m_logbuffer << std::endl;
+        try {
+            if (oldlogbuffer.at(i+1) == '[') // Disable parsing of 'structured data'
+                oldlogbuffer.insert(i+1, "-");
+        } catch (...) {
+            std::cout << "Log with empty message text: " << oldlogbuffer << std::endl;
+        }
+
+        oldlogbuffer.insert(i-1, " X "); // PROCID SP MSGID
+        oldlogbuffer.insert(0, "<15>15 "); // <int>: priority, severity, facility
+        try {
+            m_listener->processMessage(oldlogbuffer);
+        } catch (...) {
+            std::cout << "Failed parsing: " << oldlogbuffer << std::endl;
+        }
     }
     else
     {
-        try {
-            if (m_logbuffer.at(i+1) == '[') // Disable parsing of 'structured data'
-                m_logbuffer.insert(i+1, "-");
-        } catch (...) {
-            std::cout << "Log with empty message text: " << m_logbuffer << std::endl;
-        }
-
-        m_logbuffer.insert(i-1, " X "); // PROCID SP MSGID
-        m_logbuffer.insert(0, "<15>15 "); // <int>: priority, severity, facility
-        try {
-            m_listener->processMessage(m_logbuffer);
-        } catch (...) {
-            std::cout << "Failed parsing: " << m_logbuffer << std::endl;
-        }
+        std::cout << "Invalid or truncated log: " << oldlogbuffer << std::endl;
     }
 
-    m_logbuffer.clear();
+    oldlogbuffer.clear();
+}
+
+QString Backend::getIPAddress() {
+    foreach (const QHostAddress &address, QNetworkInterface::allAddresses()) {
+        if (address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress(QHostAddress::LocalHost))
+            return address.toString();
+    }
+    return QString();
 }
