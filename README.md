@@ -14,3 +14,4 @@ cmake --build . --target install
 
 Download dependency "Poco" for Win64
 https://github.com/pocoproject/poco/releases
+https://github.com/enricop/TheLogPlace/releases/download/0/VS2017-Poco-1.9.0-x64.msi
