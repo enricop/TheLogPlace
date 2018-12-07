@@ -1,7 +1,5 @@
 #include "logfilterproxymodel.h"
 
-#include "loglistmodel.h"
-
 LogFilterProxyModel::LogFilterProxyModel(QObject *parent) : QSortFilterProxyModel(parent)
 {
 }
