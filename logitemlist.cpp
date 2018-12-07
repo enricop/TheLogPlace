@@ -1,7 +1,6 @@
 #include "logitemlist.h"
-#include "logitemlist.h"
 
-LogItemList::LogItemList(QObject *parent) : QObject(parent), mItemsList()
+LogItemList::LogItemList(QObject *parent) : QObject(parent)
 {
 }
 

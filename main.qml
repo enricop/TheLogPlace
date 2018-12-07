@@ -30,7 +30,7 @@ ApplicationWindow {
         //padding: 25
         Label {
             id: status
-            text: "Nessun log caricato. Clikkare su \'Start\' per iniziare"
+            text: "Clikkare su \'Start\' per iniziare"
         }
     }
 

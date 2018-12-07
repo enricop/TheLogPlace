@@ -5,9 +5,9 @@
 
 struct LogItem
 {
-    const QString m_timestamp;
-    const QString m_processname;
-    const QString m_message;
+    QString m_timestamp;
+    QString m_processname;
+    QString m_message;
 };
 
 #endif // LOGITEM_H

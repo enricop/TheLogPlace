@@ -14,6 +14,8 @@
     #include <sys/select.h>
     #include <arpa/inet.h>
     #include <unistd.h>
+    #include <iostream>
+    #include <cstring>
 #endif
 
 static const unsigned int UDPport = 2000;
@@ -150,7 +152,11 @@ void Backend::sshConnector(const QString ipaddress,
 
     sin.sin_family = AF_INET;
     sin.sin_port = htons(22);
+#ifdef WIN32
     sin.sin_addr.s_addr = host_addr.S_un.S_addr;
+#else
+    sin.sin_addr.s_addr = host_addr.s_addr;
+#endif
 
     rc = ::connect(m_sockfd, (struct sockaddr*)(&sin), sizeof(struct sockaddr_in));
     if (rc != 0) {

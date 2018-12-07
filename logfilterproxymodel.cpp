@@ -18,12 +18,11 @@ void LogFilterProxyModel::setSource(QObject *source)
 
 QString LogFilterProxyModel::filterString() const
 {
-    return m_logTextFilterString;
+    return filterRegExp().pattern();
 }
 
 void LogFilterProxyModel::setFilterString(const QString &filter)
 {
-    m_logTextFilterString = filter;
     setFilterRegExp(QRegExp(filter, filterCaseSensitivity(), QRegExp::PatternSyntax::FixedString));
 }
 
@@ -40,17 +39,19 @@ void LogFilterProxyModel::componentComplete()
 
 bool LogFilterProxyModel::filterAcceptsRow(int source_row, const QModelIndex &source_parent) const
 {
-    if (m_logTextFilterString.isEmpty())
+    QRegExp rx = filterRegExp();
+    if (rx.isEmpty())
         return true;
 
-    //QHashIterator<int, QByteArray> it(sourceModel()->roleNames());
+    QHashIterator<int, QByteArray> it(sourceModel()->roleNames());
 
-    //while (it.hasNext()) {
-    //    it.next();
-        const QModelIndex sourceIndex = sourceModel()->index(source_row, 0, source_parent);
-        return sourceModel()->data(sourceIndex, LogListModel::MessageRole).toString().contains(m_logTextFilterString, Qt::CaseSensitivity::CaseInsensitive);
-    //        return true;
-    //}
+    while (it.hasNext()) {
+        it.next();
+        QModelIndex sourceIndex = sourceModel()->index(source_row, 0, source_parent);
+        if (sourceModel()->data(sourceIndex, it.key()).toString().contains(rx))
+            return true;
+    }
 
-    //return false;
+    return false;
+
 }
